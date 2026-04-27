@@ -1,319 +1,86 @@
 import BizError from '../error/biz-error';
-import accountService from './account-service';
-import orm from '../entity/orm';
-import user from '../entity/user';
-import email from '../entity/email';
-import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
-import { emailConst, isDel, roleConst, userConst } from '../const/entity-const';
-import kvConst from '../const/kv-const';
-import KvConst from '../const/kv-const';
-import cryptoUtils from '../utils/crypto-utils';
-import emailService from './email-service';
-import dayjs from 'dayjs';
-import permService from './perm-service';
-import roleService from './role-service';
+import userService from './user-service';
 import emailUtils from '../utils/email-utils';
-import saltHashUtils from '../utils/crypto-utils';
+import { emailConst, isDel, settingConst, userConst } from '../const/entity-const';
+import JwtUtils from '../utils/jwt-utils';
+import { v4 as uuidv4 } from 'uuid';
+import KvConst from '../const/kv-const';
 import constant from '../const/constant';
-import { t } from '../i18n/i18n'
-import reqUtils from '../utils/req-utils';
-import {oauth} from "../entity/oauth";
-import oauthService from "./oauth-service";
+import userContext from '../security/user-context';
+import verifyUtils from '../utils/verify-utils';
+import accountService from './account-service';
+import settingService from './setting-service';
+import saltHashUtils from '../utils/crypto-utils';
+import cryptoUtils from '../utils/crypto-utils';
+import turnstileService from './turnstile-service';
+import roleService from './role-service';
+import regKeyService from './reg-key-service';
+import dayjs from 'dayjs';
+import { toUtc } from '../utils/date-uitil';
+import { t } from '../i18n/i18n.js';
+import verifyRecordService from './verify-record-service';
+import orm from '../entity/orm';
+import emailEntity from '../entity/email';
 
-const userService = {
+const loginService = {
+	async register(c, params, oauth = false) {
+		const { email, password, token, code } = params;
 
-	async loginUserInfo(c, userId) {
+		let { regKey, register, registerVerify, regVerifyCount, minEmailPrefix, emailPrefixFilter } = await settingService.query(c)
 
-		const userRow = await userService.selectById(c, userId);
-
-		if (!userRow) {
-			throw new BizError(t('authExpired'), 401);
+		if (oauth) {
+			registerVerify = settingConst.registerVerify.CLOSE;
+			register = settingConst.register.OPEN;
 		}
 
-		const [account, roleRow, permKeys] = await Promise.all([
-			accountService.selectByEmailIncludeDel(c, userRow.email),
-			roleService.selectById(c, userRow.type),
-			userRow.email === c.env.admin ? Promise.resolve(['*']) : permService.userPermKeys(c, userId)
-		]);
-
-		const user = {};
-		user.userId = userRow.userId;
-		user.sendCount = userRow.sendCount;
-		user.email = userRow.email;
-		user.account = account;
-		user.name = account.name;
-		user.permKeys = permKeys;
-		user.role = roleRow;
-		user.type = userRow.type;
-
-		if (c.env.admin === userRow.email) {
-			user.role = constant.ADMIN_ROLE
-			user.type = 0;
+		if (register === settingConst.register.CLOSE) {
+			throw new BizError(t('regDisabled'));
 		}
 
-		return user;
-	},
-
-
-	async resetPassword(c, params, userId) {
-
-		const { password } = params;
-
-		if (password < 6) {
-			throw new BizError(t('pwdMinLength'));
-		}
-		const { salt, hash } = await cryptoUtils.hashPassword(password);
-		await orm(c).update(user).set({ password: hash, salt: salt }).where(eq(user.userId, userId)).run();
-	},
-
-	selectByEmail(c, email) {
-		return orm(c).select().from(user).where(
-			and(
-				eq(user.email, email),
-				eq(user.isDel, isDel.NORMAL)))
-			.get();
-	},
-
-	async insert(c, params) {
-		const { userId } = await orm(c).insert(user).values({ ...params }).returning().get();
-		return userId;
-	},
-
-	selectByEmailIncludeDel(c, email) {
-		return orm(c).select().from(user).where(sql`${user.email} COLLATE NOCASE = ${email}`).get();
-	},
-
-	selectByIdIncludeDel(c, userId) {
-		return orm(c).select().from(user).where(eq(user.userId, userId)).get();
-	},
-
-	selectById(c, userId) {
-		return orm(c).select().from(user).where(
-			and(
-				eq(user.userId, userId),
-				eq(user.isDel, isDel.NORMAL)))
-			.get();
-	},
-
-	async delete(c, userId) {
-		await orm(c).update(user).set({ isDel: isDel.DELETE }).where(eq(user.userId, userId)).run();
-		await c.env.kv.delete(kvConst.AUTH_INFO + userId)
-	},
-
-	async physicsDelete(c, params) {
-		let { userIds } = params;
-		userIds = userIds.split(',').map(Number);
-		await accountService.physicsDeleteByUserIds(c, userIds);
-		await oauthService.deleteByUserIds(c, userIds);
-		await orm(c).delete(user).where(inArray(user.userId, userIds)).run();
-	},
-
-	async list(c, params) {
-
-		let { num, size, email, timeSort, status } = params;
-
-		size = Number(size);
-		num = Number(num);
-		timeSort = Number(timeSort);
-		params.isDel = Number(params.isDel);
-		if (size > 50) {
-			size = 50;
+		if (!verifyUtils.isEmail(email)) {
+			throw new BizError(t('notEmail'));
 		}
 
-		num = (num - 1) * size;
-
-		const conditions = [];
-
-		if (status > -1) {
-			conditions.push(eq(user.status, status));
-			conditions.push(eq(user.isDel, isDel.NORMAL));
+		if (emailUtils.getName(email).length < minEmailPrefix) {
+			throw new BizError(t('minEmailPrefix', { msg: minEmailPrefix } ));
 		}
 
-
-		if (email) {
-			conditions.push(sql`${user.email} COLLATE NOCASE LIKE ${'%'+ email + '%'}`);
+		if (emailPrefixFilter.some(content => emailUtils.getName(email).includes(content))) {
+			throw new BizError(t('banEmailPrefix'));
 		}
 
-
-		if (params.isDel) {
-			conditions.push(eq(user.isDel, params.isDel));
+		if (emailUtils.getName(email).length > 64) {
+			throw new BizError(t('emailLengthLimit'));
 		}
 
-
-		const query = orm(c).select({
-			...user,
-			username: oauth.username,
-			trustLevel: oauth.trustLevel,
-			avatar: oauth.avatar,
-			name: oauth.name
-		}).from(user).leftJoin(oauth, eq(oauth.userId, user.userId))
-			.where(and(...conditions));
-
-
-		if (timeSort) {
-			query.orderBy(asc(user.userId));
-		} else {
-			query.orderBy(desc(user.userId));
-		}
-
-		const list = await query.limit(size).offset(num);
-
-		const { total } = await orm(c)
-			.select({ total: count() })
-			.from(user)
-			.where(and(...conditions)).get();
-		const userIds = list.map(user => user.userId);
-
-		const types = [...new Set(list.map(user => user.type))];
-
-		const [emailCounts, delEmailCounts, sendCounts, delSendCounts, accountCounts, delAccountCounts, roleList] = await Promise.all([
-			emailService.selectUserEmailCountList(c, userIds, emailConst.type.RECEIVE),
-			emailService.selectUserEmailCountList(c, userIds, emailConst.type.RECEIVE, isDel.DELETE),
-			emailService.selectUserEmailCountList(c, userIds, emailConst.type.SEND),
-			emailService.selectUserEmailCountList(c, userIds, emailConst.type.SEND, isDel.DELETE),
-			accountService.selectUserAccountCountList(c, userIds),
-			accountService.selectUserAccountCountList(c, userIds, isDel.DELETE),
-			roleService.selectByIdsHasPermKey(c, types,'email:send')
-		]);
-
-		const receiveMap = Object.fromEntries(emailCounts.map(item => [item.userId, item.count]));
-		const sendMap = Object.fromEntries(sendCounts.map(item => [item.userId, item.count]));
-		const accountMap = Object.fromEntries(accountCounts.map(item => [item.userId, item.count]));
-
-		const delReceiveMap = Object.fromEntries(delEmailCounts.map(item => [item.userId, item.count]));
-		const delSendMap = Object.fromEntries(delSendCounts.map(item => [item.userId, item.count]));
-		const delAccountMap = Object.fromEntries(delAccountCounts.map(item => [item.userId, item.count]));
-
-		for (const user of list) {
-
-			const userId = user.userId;
-
-			user.receiveEmailCount = receiveMap[userId] || 0;
-			user.sendEmailCount = sendMap[userId] || 0;
-			user.accountCount = accountMap[userId] || 0;
-
-			user.delReceiveEmailCount = delReceiveMap[userId] || 0;
-			user.delSendEmailCount = delSendMap[userId] || 0;
-			user.delAccountCount = delAccountMap[userId] || 0;
-
-			const roleIndex = roleList.findIndex(roleRow => user.type === roleRow.roleId);
-			let sendAction = {};
-
-			if (roleIndex > -1) {
-				sendAction.sendType = roleList[roleIndex].sendType;
-				sendAction.sendCount = roleList[roleIndex].sendCount;
-				sendAction.hasPerm = true;
-			} else {
-				sendAction.hasPerm = false;
-			}
-
-			if (user.email === c.env.admin) {
-				sendAction.sendType = constant.ADMIN_ROLE.sendType;
-				sendAction.sendCount = constant.ADMIN_ROLE.sendCount;
-				sendAction.hasPerm = true;
-				user.type = 0
-			}
-
-			user.sendAction = sendAction;
-		}
-
-		return { list, total };
-	},
-
-	async updateUserInfo(c, userId, recordCreateIp = false) {
-
-		const activeIp = reqUtils.getIp(c);
-
-		const {os, browser, device} = reqUtils.getUserAgent(c);
-
-		const params = {
-			os,
-			browser,
-			device,
-			activeIp,
-			activeTime: dayjs().format('YYYY-MM-DD HH:mm:ss')
-		};
-
-		if (recordCreateIp) {
-			params.createIp = activeIp;
-		}
-
-		await orm(c)
-			.update(user)
-			.set(params)
-			.where(eq(user.userId, userId))
-			.run();
-	},
-
-	async setPwd(c, params) {
-
-		const { password, userId } = params;
-		await this.resetPassword(c, { password }, userId);
-		await c.env.kv.delete(KvConst.AUTH_INFO + userId);
-	},
-
-	async setStatus(c, params) {
-
-		const { status, userId } = params;
-
-		await orm(c)
-			.update(user)
-			.set({ status })
-			.where(eq(user.userId, userId))
-			.run();
-
-		if (status === userConst.status.BAN) {
-			await c.env.kv.delete(KvConst.AUTH_INFO + userId);
-		}
-	},
-
-	async setType(c, params) {
-
-		const { type, userId } = params;
-
-		const roleRow = await roleService.selectById(c, type);
-
-		if (!roleRow) {
-			throw new BizError(t('roleNotExist'));
-		}
-
-		await orm(c)
-			.update(user)
-			.set({ type })
-			.where(eq(user.userId, userId))
-			.run();
-
-	},
-
-	async incrUserSendCount(c, quantity, userId) {
-		await orm(c).update(user).set({
-			sendCount: sql`${user.sendCount}
-	  +
-	  ${quantity}`
-		}).where(eq(user.userId, userId)).run();
-	},
-
-	async updateAllUserType(c, type, curType) {
-		await orm(c)
-			.update(user)
-			.set({ type })
-			.where(eq(user.type, curType))
-			.run();
-	},
-
-	async add(c, params) {
-
-		const { email: userEmail, type, password } = params;
-
-		if (!c.env.domain.includes(emailUtils.getDomain(userEmail))) {
-			throw new BizError(t('notEmailDomain'));
+		if (password.length > 30) {
+			throw new BizError(t('pwdLengthLimit'));
 		}
 
 		if (password.length < 6) {
 			throw new BizError(t('pwdMinLength'));
 		}
 
-		const accountRow = await accountService.selectByEmailIncludeDel(c, userEmail);
+		if (!c.env.domain.includes(emailUtils.getDomain(email))) {
+			throw new BizError(t('notEmailDomain'));
+		}
+
+		let type = null;
+		let regKeyId = 0
+
+		if (regKey === settingConst.regKey.OPEN) {
+			const result = await this.handleOpenRegKey(c, regKey, code)
+			type = result?.type
+			regKeyId = result?.regKeyId
+		}
+
+		if (regKey === settingConst.regKey.OPTIONAL) {
+			const result = await this.handleOpenOptional(c, regKey, code)
+			type = result?.type
+			regKeyId = result?.regKeyId
+		}
+
+		const accountRow = await accountService.selectByEmailIncludeDel(c, email);
 
 		if (accountRow && accountRow.isDel === isDel.DELETE) {
 			throw new BizError(t('isDelUser'));
@@ -323,23 +90,57 @@ const userService = {
 			throw new BizError(t('isRegAccount'));
 		}
 
-		const role = roleService.selectById(c, type);
+		let defType = null
 
-		if (!role) {
-			throw new BizError(t('roleNotExist'));
+		if (!type) {
+			const roleRow = await roleService.selectDefaultRole(c);
+			defType = roleRow.roleId
+		}
+
+		const roleRow = await roleService.selectById(c, type || defType);
+
+		if(!roleService.hasAvailDomainPerm(roleRow.availDomain, email)) {
+			if (type) {
+				throw new BizError(t('noDomainPermRegKey'),403)
+			}
+			if (defType) {
+				throw new BizError(t('noDomainPermReg'),403)
+			}
+		}
+
+		let regVerifyOpen = false
+
+		if (registerVerify === settingConst.registerVerify.OPEN) {
+			regVerifyOpen = true
+			await turnstileService.verify(c,token)
+		}
+
+		if (registerVerify === settingConst.registerVerify.COUNT) {
+			regVerifyOpen = await verifyRecordService.isOpenRegVerify(c, regVerifyCount);
+			if (regVerifyOpen) {
+				await turnstileService.verify(c,token)
+			}
 		}
 
 		const { salt, hash } = await saltHashUtils.hashPassword(password);
 
-		const userId = await userService.insert(c, { email: userEmail, password: hash, salt, type });
+		const userId = await userService.insert(c, {
+			email,
+			regKeyId,
+			password: hash,
+			salt,
+			type: type || defType
+		});
 
-		await userService.updateUserInfo(c, userId, true);
+		await accountService.insert(c, {
+			userId: userId,
+			email,
+			name: emailUtils.getName(email)
+		});
 
-		await accountService.insert(c, { userId: userId, email: userEmail, type, name: emailUtils.getName(userEmail) });
+		const createdAccountRow = await accountService.selectByEmailIncludeDel(c, email);
 
-		const createdAccountRow = await accountService.selectByEmailIncludeDel(c, userEmail);
-
-		await orm(c).insert(email).values({
+		await orm(c).insert(emailEntity).values({
 			accountId: createdAccountRow.accountId,
 			userId: userId,
 			sendEmail: 'noreply@12300.asia',
@@ -357,53 +158,137 @@ const userService = {
 <p>如需帮助，请联系管理员个人邮箱 <a href="mailto:jack121688@proton.me">jack121688@proton.me</a> 。</p>`,
 			recipient: JSON.stringify([
 				{
-					address: userEmail,
-					name: emailUtils.getName(userEmail)
+					address: email,
+					name: emailUtils.getName(email)
 				}
 			]),
-			toEmail: userEmail,
-			toName: emailUtils.getName(userEmail),
+			toEmail: email,
+			toName: emailUtils.getName(email),
 			type: emailConst.type.RECEIVE,
 			status: emailConst.status.RECEIVE,
 			unread: emailConst.unread.UNREAD
 		}).run();
-	},
 
-	async resetDaySendCount(c) {
-		const roleList = await roleService.selectByIdsAndSendType(c, 'email:send', roleConst.sendType.DAY);
-		const roleIds = roleList.map(action => action.roleId);
-		await orm(c).update(user).set({ sendCount: 0 }).where(inArray(user.type, roleIds)).run();
-	},
+		await userService.updateUserInfo(c, userId, true);
 
-	async resetSendCount(c, params) {
-		await orm(c).update(user).set({ sendCount: 0 }).where(eq(user.userId, params.userId)).run();
-	},
-
-	async restore(c, params) {
-		const { userId, type } = params
-		await orm(c)
-			.update(user)
-			.set({ isDel: isDel.NORMAL })
-			.where(eq(user.userId, userId))
-			.run();
-		const userRow = await this.selectById(c, userId);
-		await accountService.restoreByEmail(c, userRow.email);
-
-		if (type) {
-			await emailService.restoreByUserId(c, userId);
-			await accountService.restoreByUserId(c, userId);
+		if (regKey !== settingConst.regKey.CLOSE && type) {
+			await regKeyService.reduceCount(c, code, 1);
 		}
 
+		if (registerVerify === settingConst.registerVerify.COUNT && !regVerifyOpen) {
+			const row = await verifyRecordService.increaseRegCount(c);
+			return {regVerifyOpen: row.count >= regVerifyCount}
+		}
+
+		return {regVerifyOpen}
 	},
 
-	listByRegKeyId(c, regKeyId) {
-		return orm(c)
-			.select({email: user.email,createTime: user.createTime})
-			.from(user)
-			.where(eq(user.regKeyId, regKeyId))
-			.orderBy(desc(user.userId))
-			.all();
+	async registerVerify() {
+	},
+
+	async handleOpenRegKey(c, regKey, code) {
+		if (!code) {
+			throw new BizError(t('emptyRegKey'));
+		}
+
+		const regKeyRow = await regKeyService.selectByCode(c, code);
+
+		if (!regKeyRow) {
+			throw new BizError(t('notExistRegKey'));
+		}
+
+		if (regKeyRow.count <= 0) {
+			throw new BizError(t('noRegKeyCount'));
+		}
+
+		const today = toUtc().tz('Asia/Shanghai').startOf('day')
+		const expireTime = toUtc(regKeyRow.expireTime).tz('Asia/Shanghai').startOf('day');
+
+		if (expireTime.isBefore(today)) {
+			throw new BizError(t('regKeyExpire'));
+		}
+
+		return { type: regKeyRow.roleId, regKeyId: regKeyRow.regKeyId };
+	},
+
+	async handleOpenOptional(c, regKey, code) {
+		if (!code) {
+			return null
+		}
+
+		const regKeyRow = await regKeyService.selectByCode(c, code);
+
+		if (!regKeyRow) {
+			return null
+		}
+
+		const today = toUtc().tz('Asia/Shanghai').startOf('day')
+		const expireTime = toUtc(regKeyRow.expireTime).tz('Asia/Shanghai').startOf('day');
+
+		if (regKeyRow.count <= 0 || expireTime.isBefore(today)) {
+			return null
+		}
+
+		return { type: regKeyRow.roleId, regKeyId: regKeyRow.regKeyId };
+	},
+
+	async login(c, params, noVerifyPwd = false) {
+		const { email, password } = params;
+
+		if ((!email || !password) && !noVerifyPwd) {
+			throw new BizError(t('emailAndPwdEmpty'));
+		}
+
+		const userRow = await userService.selectByEmailIncludeDel(c, email);
+
+		if (!userRow) {
+			throw new BizError(t('notExistUser'));
+		}
+
+		if(userRow.isDel === isDel.DELETE) {
+			throw new BizError(t('isDelUser'));
+		}
+
+		if(userRow.status === userConst.status.BAN) {
+			throw new BizError(t('isBanUser'));
+		}
+
+		if (!await cryptoUtils.verifyPassword(password, userRow.salt, userRow.password) && !noVerifyPwd) {
+			throw new BizError(t('IncorrectPwd'));
+		}
+
+		const uuid = uuidv4();
+
+		const jwt = await JwtUtils.generateToken(c,{ userId: userRow.userId, token: uuid });
+
+		let authInfo = await c.env.kv.get(KvConst.AUTH_INFO + userRow.userId, { type: 'json' });
+
+		if (authInfo && (authInfo.user.email === userRow.email)) {
+			if (authInfo.tokens.length > 10) {
+				authInfo.tokens.shift();
+			}
+			authInfo.tokens.push(uuid);
+		} else {
+			authInfo = { tokens: [], user: userRow, refreshTime: dayjs().toISOString() };
+			authInfo.tokens.push(uuid);
+		}
+
+		await userService.updateUserInfo(c, userRow.userId);
+
+		await c.env.kv.put(KvConst.AUTH_INFO + userRow.userId, JSON.stringify(authInfo), {
+			expirationTtl: constant.TOKEN_EXPIRE
+		});
+
+		return jwt;
+	},
+
+	async logout(c, userId) {
+		const token =userContext.getToken(c);
+		const authInfo = await c.env.kv.get(KvConst.AUTH_INFO + userId, { type: 'json' });
+		const index = authInfo.tokens.findIndex(item => item === token);
+		authInfo.tokens.splice(index, 1);
+		await c.env.kv.put(KvConst.AUTH_INFO + userId, JSON.stringify(authInfo));
 	}
 };
 
-export default userService;
+export default loginService;
