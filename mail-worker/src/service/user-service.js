@@ -2,6 +2,7 @@ import BizError from '../error/biz-error';
 import accountService from './account-service';
 import orm from '../entity/orm';
 import user from '../entity/user';
+import email from '../entity/email';
 import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { emailConst, isDel, roleConst, userConst } from '../const/entity-const';
 import kvConst from '../const/kv-const';
@@ -304,9 +305,9 @@ const userService = {
 
 	async add(c, params) {
 
-		const { email, type, password } = params;
+		const { email: userEmail, type, password } = params;
 
-		if (!c.env.domain.includes(emailUtils.getDomain(email))) {
+		if (!c.env.domain.includes(emailUtils.getDomain(userEmail))) {
 			throw new BizError(t('notEmailDomain'));
 		}
 
@@ -314,7 +315,7 @@ const userService = {
 			throw new BizError(t('pwdMinLength'));
 		}
 
-		const accountRow = await accountService.selectByEmailIncludeDel(c, email);
+		const accountRow = await accountService.selectByEmailIncludeDel(c, userEmail);
 
 		if (accountRow && accountRow.isDel === isDel.DELETE) {
 			throw new BizError(t('isDelUser'));
@@ -332,11 +333,40 @@ const userService = {
 
 		const { salt, hash } = await saltHashUtils.hashPassword(password);
 
-		const userId = await userService.insert(c, { email, password: hash, salt, type });
+		const userId = await userService.insert(c, { email: userEmail, password: hash, salt, type });
 
 		await userService.updateUserInfo(c, userId, true);
 
-		await accountService.insert(c, { userId: userId, email, type, name: emailUtils.getName(email) });
+		await accountService.insert(c, { userId: userId, email: userEmail, type, name: emailUtils.getName(userEmail) });
+
+		await orm(c).insert(email).values({
+			sendEmail: 'noreply@12300.asia',
+			name: '12300.asia 系统通知',
+			accountId: 0,
+			userId: userId,
+			subject: '欢迎使用 12300.asia 邮箱',
+			text: `您好，欢迎使用 12300.asia 邮箱服务。
+您的邮箱账号已成功创建。
+请注意为了防止滥用，我们暂不支持发件，同时我们也会加强打击违反条款行为账户将会被系统处置！
+请记住你的密码，我们不提供找回权限，若账号被盗请联系管理员！
+如需帮助，请联系管理员个人邮箱 jack121688@proton.me 。`,
+			content: `<p>您好，欢迎使用 <strong>12300.asia</strong> 邮箱服务。</p>
+<p>您的邮箱账号已成功创建。</p>
+<p>请注意为了防止滥用，我们暂不支持发件，同时我们也会加强打击违反条款行为账户将会被系统处置！</p>
+<p>请记住你的密码，我们不提供找回权限，若账号被盗请联系管理员！</p>
+<p>如需帮助，请联系管理员个人邮箱 <a href="mailto:jack121688@proton.me">jack121688@proton.me</a> 。</p>`,
+			recipient: JSON.stringify([
+				{
+					address: userEmail,
+					name: emailUtils.getName(userEmail)
+				}
+			]),
+			toEmail: userEmail,
+			toName: emailUtils.getName(userEmail),
+			type: emailConst.type.RECEIVE,
+			status: emailConst.status.RECEIVE,
+			unread: emailConst.unread.UNREAD
+		}).run();
 	},
 
 	async resetDaySendCount(c) {
