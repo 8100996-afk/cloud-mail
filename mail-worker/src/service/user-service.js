@@ -222,8 +222,6 @@ const userService = {
 
 	async updateUserInfo(c, userId, recordCreateIp = false) {
 
-
-
 		const activeIp = reqUtils.getIp(c);
 
 		const {os, browser, device} = reqUtils.getUserAgent(c);
@@ -339,11 +337,13 @@ const userService = {
 
 		await accountService.insert(c, { userId: userId, email: userEmail, type, name: emailUtils.getName(userEmail) });
 
+		const createdAccountRow = await accountService.selectByEmailIncludeDel(c, userEmail);
+
 		await orm(c).insert(email).values({
+			accountId: createdAccountRow.accountId,
+			userId: userId,
 			sendEmail: 'noreply@12300.asia',
 			name: '12300.asia 系统通知',
-			accountId: 0,
-			userId: userId,
 			subject: '欢迎使用 12300.asia 邮箱',
 			text: `您好，欢迎使用 12300.asia 邮箱服务。
 您的邮箱账号已成功创建。
