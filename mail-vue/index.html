@@ -2,32 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <meta name="theme-color" content="#F1F1F1" id="theme-color-meta">
-  <meta name="description" content="Cloud Mail 是一个 Serverless 响应式邮箱服务，支持邮件发送，可部署到 Cloudflare 平台，降低服务器成本。Cloud Mail is a serverless responsive email service that supports email sending and can be deployed on Cloudflare to reduce server costs.">
-  <title>Cloud Mail</title>
+
+  <title>Asia 12300 Mail - Email Registration and Login</title>
+
+  <meta
+    name="description"
+    content="Asia 12300 Mail is dedicated to providing open email registration and reliable email access for users across Asia. 亚洲12300邮箱致力于为亚洲用户提供开放注册、稳定可用的电子邮箱服务。"
+  >
+
+  <meta
+    name="keywords"
+    content="Asia 12300 Mail, 12300 Mail, 12300.asia email, email registration, email login, Asian email service, 亚洲12300邮箱, 12300邮箱, 邮箱注册, 邮箱登录, 亚洲邮箱服务"
+  >
+
+  <meta name="robots" content="index, follow">
+
+  <meta property="og:title" content="Asia 12300 Mail - Email Registration and Login">
+  <meta
+    property="og:description"
+    content="Asia 12300 Mail provides open email registration and stable email access for users across Asia. 亚洲12300邮箱为亚洲用户提供开放注册与稳定可用的邮箱服务。"
+  >
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mail.12300.asia/">
+  <meta property="og:site_name" content="Asia 12300 Mail">
+
+  <link rel="canonical" href="https://mail.12300.asia/">
   <link rel="icon" href="/public/mail.png" type="image/png">
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
   <script>
-    const uiStoreStr =  localStorage.getItem('ui')
+    const uiStoreStr = localStorage.getItem('ui')
     if (uiStoreStr) {
-      const uiStore =  JSON.parse(uiStoreStr)
+      const uiStore = JSON.parse(uiStoreStr)
       const root = document.documentElement
-      root.setAttribute('class', uiStore.dark ? 'dark' : '');
-      const metaTag = document.getElementById('theme-color-meta');
-      const isMobile =  !window.matchMedia("(pointer: fine) and (hover: hover)").matches;
-      metaTag.setAttribute('content', uiStore.dark ? (isMobile ? '#141414' : '#000000') : (isMobile ? '#FFFFFF' : '#F1F1F1'));
+      root.setAttribute('class', uiStore.dark ? 'dark' : '')
+      const metaTag = document.getElementById('theme-color-meta')
+      const isMobile = !window.matchMedia("(pointer: fine) and (hover: hover)").matches
+      metaTag.setAttribute(
+        'content',
+        uiStore.dark
+          ? (isMobile ? '#141414' : '#000000')
+          : (isMobile ? '#FFFFFF' : '#F1F1F1')
+      )
     }
   </script>
 </head>
+
 <style>
   html {
     background: #FFFFFF;
   }
+
   .dark {
     background: #141414;
   }
+
   #loading-first {
     position: fixed;
     left: 0;
@@ -103,20 +139,30 @@
     }
   }
 </style>
+
 <body>
-<div id="loading-first" >
-  <div class="loading-icon">
-    <svg class="circular" viewBox="0 0 20 20">
-      <g class="loading-path">
-        <circle r="3.375" class="dot1" rx="0" ry="0"/>
-        <circle r="3.375" class="dot2" rx="0" ry="0"/>
-        <circle r="3.375" class="dot4" rx="0" ry="0"/>
-        <circle r="3.375" class="dot3" rx="0" ry="0"/>
-      </g>
-    </svg>
+  <noscript>
+    <strong>
+      Asia 12300 Mail requires JavaScript to run properly.
+      亚洲12300邮箱需要启用 JavaScript 才能正常使用。
+    </strong>
+  </noscript>
+
+  <div id="loading-first">
+    <div class="loading-icon">
+      <svg class="circular" viewBox="0 0 20 20">
+        <g class="loading-path">
+          <circle r="3.375" class="dot1" rx="0" ry="0"/>
+          <circle r="3.375" class="dot2" rx="0" ry="0"/>
+          <circle r="3.375" class="dot4" rx="0" ry="0"/>
+          <circle r="3.375" class="dot3" rx="0" ry="0"/>
+        </g>
+      </svg>
+    </div>
   </div>
-</div>
-<div id="app"></div>
-<script type="module" src="/src/main.js"></script>
+
+  <div id="app"></div>
+
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
