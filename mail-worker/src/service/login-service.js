@@ -19,6 +19,7 @@ import dayjs from 'dayjs';
 import { toUtc } from '../utils/date-uitil';
 import { t } from '../i18n/i18n.js';
 import verifyRecordService from './verify-record-service';
+import ipRiskService from './ip-risk-service';
 
 const loginService = {
 
@@ -35,6 +36,12 @@ const loginService = {
 
 		if (register === settingConst.register.CLOSE) {
 			throw new BizError(t('regDisabled'));
+		}
+
+		// IP 风控：检测到 代理/VPN 或 数据中心(机房) IP 时阻止注册
+		const riskResult = await ipRiskService.checkRegister(c);
+		if (!riskResult.allow) {
+			throw new BizError(t('riskIpBlocked'), 403);
 		}
 
 		if (!verifyUtils.isEmail(email)) {

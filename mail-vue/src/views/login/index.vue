@@ -1,16 +1,12 @@
 <template>
   <div id="login-box" :style=" background ? 'background: var(--el-bg-color)' : ''" v-loading="oauthLoading" element-loading-text="登录中...">
-    <div id="background-wrap" v-if="!settingStore.settings.background">
-      <div class="x1 cloud"></div>
-      <div class="x2 cloud"></div>
-      <div class="x3 cloud"></div>
-      <div class="x4 cloud"></div>
-      <div class="x5 cloud"></div>
-    </div>
-    <div v-else :style="background"></div>
+    <div v-if="settingStore.settings.background" class="custom-bg" :style="background"></div>
     <div class="form-wrapper">
       <div class="container">
-        <span class="form-title">{{ settingStore.settings.title }}</span>
+        <div class="brand-head">
+          <BrandLogo :size="48"/>
+          <span class="form-title">{{ settingStore.settings.title }}</span>
+        </div>
         <span class="form-desc" v-if="show === 'login'">{{ $t('loginTitle') }}</span>
         <span class="form-desc" v-else>{{ $t('regTitle') }}</span>
         <div v-show="show === 'login'">
@@ -104,6 +100,12 @@
           <div class="switch" @click="show = 'login'" v-else>{{ $t('hasAccount') }} <span>{{ $t('loginSwitch') }}</span>
           </div>
         </template>
+        <div class="policy-links">
+          <span>{{ $t('footerAgree') }}</span>
+          <router-link class="policy-link" to="/privacy">{{ $t('privacyPolicy') }}</router-link>
+          <span>{{ $t('footerAnd') }}</span>
+          <router-link class="policy-link" to="/terms">{{ $t('termsOfService') }}</router-link>
+        </div>
       </div>
     </div>
     <el-dialog class="bind-dialog" v-model="showBindForm"  title="注册邮箱" >
@@ -159,6 +161,7 @@ import {loginUserInfo} from "@/request/my.js";
 import {permsToRouter} from "@/perm/perm.js";
 import {useI18n} from "vue-i18n";
 import {oauthBindUser, oauthLinuxDoLogin} from "@/request/ouath.js";
+import BrandLogo from "@/components/brand-logo/index.vue";
 
 const {t} = useI18n();
 const accountStore = useAccountStore();
@@ -563,59 +566,58 @@ function submitRegister() {
 <style lang="scss" scoped>
 
 .form-wrapper {
-  position: fixed;
-  right: 0;
-  height: 100%;
+  position: relative;
   z-index: 10;
+  width: 100%;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  @media (max-width: 767px) {
-    width: 100%;
-  }
+  padding: 24px 16px;
 }
 
 .container {
+  position: relative;
   background: v-bind(loginOpacity);
-  padding-left: 40px;
-  padding-right: 40px;
+  padding: 40px 40px 26px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: 450px;
-  height: 100%;
-  border-left: 1px solid var(--login-border);
-  box-shadow: var(--el-box-shadow-light);
-  @media (max-width: 1024px) {
-    padding: 20px 18px;
-    width: 384px;
-    margin-left: 18px;
+  width: 100%;
+  max-width: 448px;
+  border: 1px solid var(--light-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, .12), 0 4px 18px rgba(60, 64, 67, .10);
+  @media (max-width: 480px) {
+    padding: 30px 22px 22px;
   }
-  @media (max-width: 767px) {
-    border: 1px solid var(--login-border);
-    padding: 20px 18px;
-    border-radius: 6px;
-    height: fit-content;
-    width: 100%;
-    margin-right: 18px;
-    margin-left: 18px;
+
+  .brand-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
   }
 
   .btn {
-    height: 36px;
+    height: 40px;
     width: 100%;
-    border-radius: 6px;
+    border-radius: 20px;
+    font-weight: 500;
   }
 
   .form-desc {
-    margin-top: 5px;
-    margin-bottom: 18px;
+    margin-top: 4px;
+    margin-bottom: 24px;
+    text-align: center;
     color: var(--form-desc-color);
   }
 
   .form-title {
-    font-weight: bold;
-    font-size: 22px !important;
+    font-weight: 500;
+    font-size: 24px !important;
+    text-align: center;
   }
 
   .switch {
@@ -629,23 +631,43 @@ function submitRegister() {
   }
 
   :deep(.el-input__wrapper) {
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--el-bg-color);
   }
 
   .email-input :deep(.el-input__wrapper) {
-    border-radius: 6px 0 0 6px;
+    border-radius: 8px 0 0 8px;
     background: var(--el-bg-color);
   }
 
   .el-input {
-    height: 38px;
+    height: 44px;
     width: 100%;
     margin-bottom: 18px;
 
     :deep(.el-input__inner) {
-      height: 36px;
+      height: 42px;
     }
+  }
+}
+
+.policy-links {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--light-border);
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--secondary-text-color);
+
+  .policy-link {
+    color: var(--login-switch-color);
+    text-decoration: none;
+    margin: 0 3px;
+  }
+
+  .policy-link:hover {
+    text-decoration: underline;
   }
 }
 
@@ -709,88 +731,22 @@ function submitRegister() {
 
 
 #login-box {
-  background: linear-gradient(to bottom, #2980b9, #6dd5fa, #fff);
-  font: 100% Arial, sans-serif;
+  position: relative;
+  background: var(--el-bg-color);
+  font-family: inherit;
+  min-height: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  display: grid;
-  grid-template-columns: 1fr;
+  overflow-y: auto;
+  display: block;
 }
 
-
-#background-wrap {
-  height: 100%;
+.custom-bg {
+  position: fixed;
+  inset: 0;
   z-index: 0;
-}
-
-@keyframes animateCloud {
-  0% {
-    margin-left: -500px;
-  }
-
-  100% {
-    margin-left: 100%;
-  }
-}
-
-.x1 {
-  animation: animateCloud 30s linear infinite;
-  transform: scale(0.65);
-}
-
-.x2 {
-  animation: animateCloud 15s linear infinite;
-  transform: scale(0.3);
-}
-
-.x3 {
-  animation: animateCloud 25s linear infinite;
-  transform: scale(0.5);
-}
-
-.x4 {
-  animation: animateCloud 13s linear infinite;
-  transform: scale(0.4);
-}
-
-.x5 {
-  animation: animateCloud 20s linear infinite;
-  transform: scale(0.55);
-}
-
-.cloud {
-  background: linear-gradient(to bottom, #fff 5%, #f1f1f1 100%);
-  border-radius: 100px;
-  box-shadow: 0 8px 5px rgba(0, 0, 0, 0.1);
-  height: 120px;
-  width: 350px;
-  position: relative;
-}
-
-.cloud:after,
-.cloud:before {
-  content: "";
-  position: absolute;
-  background: #fff;
-  z-index: -1;
-}
-
-.cloud:after {
-  border-radius: 100px;
-  height: 100px;
-  left: 50px;
-  top: -50px;
-  width: 100px;
-}
-
-.cloud:before {
-  border-radius: 200px;
-  height: 180px;
-  width: 180px;
-  right: 50px;
-  top: -90px;
 }
 
 </style>

@@ -60,6 +60,16 @@ const routes = [
         component: () => import('@/views/login/index.vue')
     },
     {
+        path: '/privacy',
+        name: 'privacy',
+        component: () => import('@/views/policy/privacy.vue')
+    },
+    {
+        path: '/terms',
+        name: 'terms',
+        component: () => import('@/views/policy/terms.vue')
+    },
+    {
         path: '/test',
         name: 'test',
         component: () => import('@/views/test/index.vue')
@@ -98,7 +108,9 @@ router.beforeEach((to, from, next) => {
 
     const token = localStorage.getItem('token')
 
-    if (!token && to.name !== 'login') {
+    const publicPages = ['login', 'privacy', 'terms']
+
+    if (!token && !publicPages.includes(to.name)) {
         return next({name: 'login'})
     }
 

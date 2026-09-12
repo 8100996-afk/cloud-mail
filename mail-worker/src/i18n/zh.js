@@ -2,6 +2,7 @@ const zh = {
 	IncorrectPwd: '密码输入错误',
 	addAccountDisabled: '添加邮箱功能已关闭',
 	regDisabled: '注册功能已关闭',
+	riskIpBlocked: '检测到当前网络环境存在风险(代理/VPN或数据中心IP)，为保障账号安全，暂不支持在此网络下注册，请更换网络后重试',
 	emptyEmail: '邮箱不能为空',
 	notEmail: '非法邮箱',
 	notExistDomain: '不存在的邮箱域名',

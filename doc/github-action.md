@@ -2,7 +2,7 @@
 
 **配置 Github 仓库**
 
-1. Fork 或克隆仓库 [https://github.com/eoao/cloud-mail](https://github.com/eoao/cloud-mail)
+1. 克隆本仓库到你自己的 GitHub 账户
 2. 进入您的 GitHub 仓库设置
 3. 转到 Settings → Secrets and variables → Actions → New Repository secrets
 4. 添加以下 Secrets：
@@ -34,5 +34,4 @@
 2. 复制到 GitHub Secrets 中的 `CLOUDFLARE_ACCOUNT_ID`
 
 **运行工作流**
-1. 然后在Action页面手动运行工作流，后续同步上游后会自动部署到 Cloudflare Workers。如未配置 `INIT_URL`，则需要手动访问 `https://你的项目域名/api/init/你的jwt_secret` 进行数据库初始化。
-2. 自动同步上游可使用bot或者手动点击Sync Upstream按钮。
+1. 在 Action 页面手动运行工作流，之后每次推送到 `main` 分支都会自动部署到 Cloudflare Workers。如未配置 `INIT_URL`，则需要手动访问 `https://你的项目域名/api/init/你的jwt_secret` 进行数据库初始化。
