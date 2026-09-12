@@ -2,7 +2,12 @@
   <div class="header" :class="!hasPerm('email:send') ? 'not-send' : ''">
     <div class="header-btn">
       <hanburger @click="changeAside"></hanburger>
-      <span class="breadcrumb-item">{{ $t(route.meta.title) }}</span>
+    </div>
+    <div class="gmail-search">
+      <Icon class="search-ic" icon="material-symbols:search-rounded" width="22" height="22"/>
+      <input v-model="uiStore.searchKeyword" :placeholder="$t('searchMail')" aria-label="搜索邮件"/>
+      <Icon v-if="uiStore.searchKeyword" class="search-ic clear" icon="material-symbols:close-rounded" width="20" height="20"
+            @click="uiStore.searchKeyword = ''"/>
     </div>
     <div v-perm="'email:send'" class="writer-box" @click="openSend">
       <div class="writer">
@@ -80,7 +85,7 @@ import {Icon} from "@iconify/vue";
 import {useUiStore} from "@/store/ui.js";
 import {useUserStore} from "@/store/user.js";
 import {useRoute} from "vue-router";
-import {computed, ref} from "vue";
+import {computed, ref, watch} from "vue";
 import {useSettingStore} from "@/store/setting.js";
 import {hasPerm} from "@/perm/perm.js"
 import {useI18n} from "vue-i18n";
@@ -91,6 +96,7 @@ const route = useRoute();
 const settingStore = useSettingStore();
 const userStore = useUserStore();
 const uiStore = useUiStore();
+watch(() => route.path, () => { uiStore.searchKeyword = "" })
 const logoutLoading = ref(false)
 const userInfoShow = ref(false)
 const userinfoRef = ref({})
@@ -356,16 +362,56 @@ function formatName(email) {
 
 
 .header {
-  text-align: right;
   font-size: 12px;
-  display: grid;
+  display: flex;
+  align-items: center;
   height: 100%;
-  gap: 10px;
-  grid-template-columns: auto auto 1fr;
+  gap: 8px;
+  padding-right: 6px;
 }
 
-.header.not-send {
-  grid-template-columns: auto 1fr;
+.gmail-search {
+  flex: 1;
+  min-width: 0;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 24px;
+  background: var(--nav-hover);
+  transition: background .15s, box-shadow .15s;
+
+  .search-ic {
+    color: var(--secondary-text-color);
+    flex: none;
+    cursor: pointer;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 15px;
+    color: var(--el-text-color-primary);
+    font-family: inherit;
+  }
+
+  input::placeholder {
+    color: var(--secondary-text-color);
+  }
+
+  &:focus-within {
+    background: var(--el-bg-color);
+    box-shadow: 0 1px 3px rgba(60, 64, 67, .18), 0 1px 6px rgba(60, 64, 67, .12);
+  }
+
+  @media (max-width: 767px) {
+    height: 40px;
+  }
 }
 
 .writer-box {

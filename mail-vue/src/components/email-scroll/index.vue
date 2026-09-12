@@ -30,11 +30,11 @@
     <div ref="scroll" class="scroll">
       <UseVirtualList ref="scrollbarRef"
                         @scroll="onScroll"
-                        :list="list"
+                        :list="viewList"
                         :options="{ itemHeight: itemHeight, overscan: 15 }"
                         class="virtual"
                         style="height: 100%"
-                        v-if="!loading && emailList.length > 0"
+                        v-if="!loading && viewList.length > 0"
                         :key="keyCount"
         >
           <template #default="{ data: item, index }" >
@@ -135,6 +135,9 @@
                        :showUserInfo="showUserInfo"
                        :type="type"/>
       <div class="empty" v-if="noLoading && emailList.length === 0 && !loading">
+        <el-empty :image-size="isMobile ? 120 : null" :description="$t('noMessagesFound')"/>
+      </div>
+      <div class="empty" v-if="uiStore.searchKeyword && emailList.length > 0 && viewList.length === 0 && !loading">
         <el-empty :image-size="isMobile ? 120 : null" :description="$t('noMessagesFound')"/>
       </div>
     </div>
@@ -380,6 +383,18 @@ const { arrivedState } = useScroll(scrollbarRef, {
 
 const list = computed(() => {
   return [...emailList, ...expandList]
+})
+
+// 顶部搜索框：按关键字客户端过滤当前已加载的邮件（发件人/主题/摘要/邮箱）
+const viewList = computed(() => {
+  const kw = (uiStore.searchKeyword || '').trim().toLowerCase()
+  if (!kw) return list.value
+  return emailList.filter(e =>
+    ((e.name || '') + ' ' + (e.subject || '') + ' ' + (e.formatText || '') + ' ' +
+      (e.sendEmail || '') + ' ' + (e.toEmail || '') + ' ' + (e.userEmail || ''))
+      .toLowerCase()
+      .includes(kw)
+  )
 })
 
 const itemHeight = computed(() => {

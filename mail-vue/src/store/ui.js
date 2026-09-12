@@ -7,6 +7,7 @@ export const useUiStore = defineStore('ui', {
         backgroundLoading: true,
         changeNotice: 0,
         writerRef: null,
+        searchKeyword: '',
         changePreview: 0,
         previewData: {},
         key: 0,

@@ -24,6 +24,7 @@ const zh = {
     add: '添加',
     manage: '管理',
     compose: '写信',
+    searchMail: '搜索邮件',
     rename: '改名',
     delete: '删除',
     save: '保存',
