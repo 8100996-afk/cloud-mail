@@ -24,6 +24,7 @@ const en = {
     add: 'Add',
     manage: 'Manage',
     compose: 'Compose',
+    searchMail: 'Search mail',
     rename: 'Rename',
     delete: 'Delete',
     save: 'Save',
