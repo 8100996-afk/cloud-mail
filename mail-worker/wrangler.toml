@@ -32,7 +32,7 @@ crons = ["0 16 * * *"]	#定时任务每天晚上12点执行
 
 [vars]
 #orm_log = false
-domain = ["12300.asia"]			#邮件域名(JSON数组),多个示例: ["a.com","b.com"] —— 若你的邮箱域名不是 12300.asia 请改这里
+domain = ["12300.asia","12300.bond","12300.cyou","12300.xyz","12888.bond","89999.bond","kkgo.xyz","mailo.cyou"]	#邮件域名(JSON数组) —— 每个域名都必须在 Cloudflare Email Routing 里把收件转发到本 worker，否则收不到信；不用于本邮箱服务的请删掉
 # admin 和 jwt_secret 属于敏感信息，请在 Cloudflare 面板 → Worker → 设置 → 变量和机密 中配置，切勿写入仓库
 # admin 设为普通变量(管理员邮箱)，jwt_secret 设为 Secret(机密)
 #admin = ""				#管理员的邮箱	示例: admin@example.com
