@@ -124,6 +124,8 @@ button, input, select, textarea {
     --compose-bg: #ffffff;
     --compose-bg-hover: #f2f6ff;
     --nav-hover: rgba(32, 33, 36, 0.06);
+    --read-row-bg: #f6f8fc;
+    --unread-row-bg: #ffffff;
     --loadding-background: rgba(255, 255, 255, 0.8);
     --dark-border: #CDD0D6;
     --base-fill: #F0F2F5;
@@ -156,6 +158,8 @@ button, input, select, textarea {
     --compose-bg: #2a2a2b;
     --compose-bg-hover: #37373a;
     --nav-hover: rgba(255, 255, 255, 0.08);
+    --read-row-bg: #151515;
+    --unread-row-bg: #282a2d;
     --header-actions-border: inset 0 -1px 0 0 var(--el-border-color-lighter);
     --loadding-background: rgba(0, 0, 0, 0.3);
     --dark-border: #636466;

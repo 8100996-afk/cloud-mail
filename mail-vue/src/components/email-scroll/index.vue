@@ -38,7 +38,7 @@
                         :key="keyCount"
         >
           <template #default="{ data: item, index }" >
-            <div :class="'email-row ' + props.type"
+            <div :class="['email-row', props.type, (item.unread === EmailUnreadEnum.UNREAD && showUnread) ? 'is-unread' : '']"
                  :data-checked="item.checked"
                  @click="jumpDetails(item)"
                  v-if="!item.expand"
@@ -956,11 +956,12 @@ function loadData() {
   display: flex;
   padding: 8px 0;
   justify-content: space-between;
-  box-shadow: var(--header-actions-border);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--read-row-bg);
   cursor: pointer;
   align-items: center;
   position: relative;
-  transition: background 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: background 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
   height: 48px;
   @media (max-width: 1366px) {
     height: 83px;
@@ -1180,9 +1181,14 @@ function loadData() {
     }
   }
 
+  &.is-unread {
+    background: var(--unread-row-bg);
+  }
+
   &:hover {
     background-color: var(--email-hover-background);
-    z-index: 0;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.2), 0 2px 6px rgba(60, 64, 67, 0.12);
+    z-index: 2;
   }
 
   /*&[data-checked="true"] {

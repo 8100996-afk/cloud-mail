@@ -619,41 +619,50 @@ function close() {
 <style scoped lang="scss">
 .send {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  z-index: 2000;
+  pointer-events: none;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-end;
 
   .write-box {
+    pointer-events: auto;
     background: var(--el-bg-color);
-    width: min(1367px, calc(100% - 80px));
-    box-shadow: var(--el-box-shadow-light);
+    width: 512px;
+    margin-right: 24px;
+    box-shadow: 0 8px 24px rgba(60, 64, 67, 0.28), 0 2px 6px rgba(60, 64, 67, 0.18);
     border: 1px solid var(--el-border-color-light);
     transition: var(--el-transition-duration);
-    padding: 15px;
-    border-radius: 8px;
+    padding: 0 16px 12px;
+    border-radius: 12px 12px 0 0;
     display: grid;
     grid-template-rows: auto 1fr;
     overflow: hidden;
     @media (max-width: 1024px) {
       width: 100%;
       height: 100%;
+      margin-right: 0;
       border-radius: 0;
       border: 0;
-      padding-top: 10px;
     }
 
     @media (min-width: 1025px) {
-      height: min(800px, calc(100vh - 60px));
+      height: min(580px, calc(100vh - 40px));
     }
 
     .title {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
+      align-items: center;
+      margin: 0 -16px 12px;
+      padding: 10px 12px 10px 16px;
+      background: #3c4043;
+      color: #ffffff;
+      border-radius: 12px 12px 0 0;
+      @media (max-width: 1024px) {
+        border-radius: 0;
+      }
 
       .title-left {
         align-items: center;
