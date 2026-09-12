@@ -2,6 +2,7 @@ const en = {
 	IncorrectPwd: 'Incorrect password',
 	addAccountDisabled: 'Add Email Address feature is disabled',
 	regDisabled: 'Sign up is disabled',
+	riskIpBlocked: 'Registration is not allowed from this network. A proxy, VPN, or data-center IP was detected. Please switch to a normal network and try again.',
 	emptyEmail: 'Email cannot be empty',
 	notEmail: 'Invalid email',
 	notExistDomain: 'Email domain does not exist',

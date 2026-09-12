@@ -34,6 +34,11 @@ crons = ["0 16 * * *"]	#定时任务每天晚上12点执行
 #domain = []				#邮件域名可可配置多个 示例: ["example1.com","example2.com"]
 #admin = ""				#管理员的邮箱	示例: admin@example.com
 #jwt_secret = ""			#jwt令牌的密钥,随便填一串字符串
+#risk_control = true		#IP风控总开关,检测到代理/VPN或机房IP时阻止注册;设为false关闭
+#iplark_api = "https://iplark.com/ipstack?ip={ip}"	#IP检测接口地址,使用{ip}作为占位符,需返回JSON
+#risk_block_proxy = true	#是否拦截 代理/VPN,默认拦截;设为false关闭
+#risk_block_hosting = true	#是否拦截 数据中心/机房 IP,默认拦截;设为false关闭
+#risk_timeout = 4000		#请求IP检测接口的超时时间(毫秒),默认4000
 
 [build]
 command = "pnpm --prefix ../mail-vue install && pnpm --prefix ../mail-vue run build"

@@ -106,12 +106,15 @@ button, input, select, textarea {
 }
 
 :root {
-    --el-color-primary: #1890ff;
-    --el-color-primary-dark-2: #1064c0;
-    --el-color-primary-light-3: #4dabff;
-    --el-color-primary-light-5: #69c0ff;
-    --el-color-primary-light-7: #91d5ff;
-    --el-color-primary-light-9: #e6f7ff;
+    /* Google / Gmail 风格主色 */
+    --el-color-primary: #1a73e8;
+    --el-color-primary-dark-2: #1765cc;
+    --el-color-primary-light-3: #5c9cee;
+    --el-color-primary-light-5: #8bb9f3;
+    --el-color-primary-light-7: #bad3f8;
+    --el-color-primary-light-9: #e8f0fe;
+    /* 品牌辅助色（Gmail 信封红） */
+    --brand-accent: #ea4335;
 
     --extra-light-fill: #FAFCFF;
     --light-ill: #F5F7FA;
@@ -129,8 +132,8 @@ button, input, select, textarea {
     --email-scroll-content-color: rgba(25, 41, 59, 0.4);
     --email-hover-background: #F2F6FC;
     --login-border: none;
-    --form-desc-color: #71717a;
-    --login-switch-color: #006be6;
+    --form-desc-color: #5f6368;
+    --login-switch-color: #1a73e8;
     --scrollbar-track-color: #A8ABB2;
     --base-border-color: #DCDFE6;
     --secondary-text-color: #909399;
