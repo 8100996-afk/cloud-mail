@@ -23,6 +23,7 @@ const en = {
     confirmPassword: 'Confirm password',
     add: 'Add',
     manage: 'Manage',
+    compose: 'Compose',
     rename: 'Rename',
     delete: 'Delete',
     save: 'Save',

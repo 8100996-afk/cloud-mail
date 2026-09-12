@@ -33,10 +33,10 @@ crons = ["0 16 * * *"]	#定时任务每天晚上12点执行
 [vars]
 #orm_log = false
 domain = ["12300.asia","12300.bond","12300.cyou","12300.xyz","12888.bond","89999.bond","kkgo.xyz","mailo.cyou"]	#邮件域名(JSON数组) —— 每个域名都必须在 Cloudflare Email Routing 里把收件转发到本 worker，否则收不到信；不用于本邮箱服务的请删掉
-# admin 和 jwt_secret 属于敏感信息，请在 Cloudflare 面板 → Worker → 设置 → 变量和机密 中配置，切勿写入仓库
-# admin 设为普通变量(管理员邮箱)，jwt_secret 设为 Secret(机密)
-#admin = ""				#管理员的邮箱	示例: admin@example.com
-#jwt_secret = ""			#jwt令牌的密钥,随便填一串字符串
+admin = "admin@12300.asia"		#管理员邮箱
+# 本仓库为公开仓库，jwt_secret 属于密钥，严禁写入此文件！请在 Cloudflare 面板
+# → cloud-mail → 设置 → 变量和机密 中，将 jwt_secret 添加为 Secret(机密)
+#jwt_secret = ""			#jwt令牌的密钥(仅在私有部署时才可写在此处)
 #risk_control = true		#IP风控总开关,检测到代理/VPN或机房IP时阻止注册;设为false关闭
 #iplark_api = "https://iplark.com/ipstack?ip={ip}"	#IP检测接口地址,使用{ip}作为占位符,需返回JSON
 #risk_block_proxy = true	#是否拦截 代理/VPN,默认拦截;设为false关闭

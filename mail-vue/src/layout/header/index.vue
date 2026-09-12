@@ -341,16 +341,16 @@ function formatName(email) {
 
   .details-avatar {
     margin-top: 20px;
-    height: 40px;
-    width: 40px;
-    background: var(--el-bg-color);
-    color: var(--el-text-color-primary);
-    border: 1px solid var(--dark-border);
-    font-size: 18px;
+    height: 56px;
+    width: 56px;
+    background: var(--el-color-primary);
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    border-radius: 50%;
   }
 }
 
@@ -380,7 +380,7 @@ function formatName(email) {
     height: 34px;
     border-radius: 50%;
     color: #ffffff;
-    background: linear-gradient(135deg, #1890ff, #3a80dd);
+    background: var(--el-color-primary);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -452,15 +452,15 @@ function formatName(email) {
     cursor: pointer;
 
     .avatar-text {
-      background: var(--el-bg-color);
-      color: var(--el-text-color-primary);
-      height: 30px;
-      width: 30px;
+      background: var(--el-color-primary);
+      color: #ffffff;
+      height: 32px;
+      width: 32px;
+      font-weight: 500;
       display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 8px;
-      border: 1px solid var(--dark-border);
+      border-radius: 50%;
     }
 
     .setting-icon {
