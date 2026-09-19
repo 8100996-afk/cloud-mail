@@ -6,97 +6,116 @@
         <div class="brand-head">
           <BrandLogo :size="40"/>
         </div>
-        <h1 class="g-title">{{ show === 'login' ? $t('loginBtn') : $t('regSwitch') }}</h1>
-        <p class="g-subtitle">{{ show === 'login' ? $t('loginSub', {brand: settingStore.settings.title}) : $t('regSub', {brand: settingStore.settings.title}) }}</p>
-        <div v-show="show === 'login'">
-          <el-input :class="settingStore.settings.loginDomain === 0 ? 'email-input' : ''" v-model="form.email"
-                    type="text" :placeholder="$t('emailAccount')" autocomplete="off">
-            <template #append v-if="settingStore.settings.loginDomain === 0">
-              <div @click.stop="openSelect">
-                <el-select
-                    v-if="show === 'login'"
-                    ref="mySelect"
-                    v-model="suffix"
-                    :placeholder="$t('select')"
-                    class="select"
-                >
-                  <el-option
-                      v-for="item in domainList"
-                      :key="item"
-                      :label="item"
-                      :value="item"
-                  />
-                </el-select>
-                <div style="color: var(--el-text-color-primary)">
-                  <span>{{ suffix }}</span>
-                  <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
+
+        <!-- ===================== 登录 ===================== -->
+        <template v-if="show === 'login'">
+          <!-- 步骤1：邮箱 -->
+          <div v-show="loginStep === 1">
+            <h1 class="g-title">{{ $t('loginBtn') }}</h1>
+            <p class="g-subtitle">{{ $t('loginSub', {brand: settingStore.settings.title}) }}</p>
+            <el-input :class="settingStore.settings.loginDomain === 0 ? 'email-input' : ''" v-model="form.email"
+                      type="text" :placeholder="$t('emailAccount')" autocomplete="off" @keyup.enter="nextLoginEmail">
+              <template #append v-if="settingStore.settings.loginDomain === 0">
+                <div @click.stop="openSelect">
+                  <el-select ref="mySelect" v-model="suffix" :placeholder="$t('select')" class="select">
+                    <el-option v-for="item in domainList" :key="item" :label="item" :value="item"/>
+                  </el-select>
+                  <div style="color: var(--el-text-color-primary)">
+                    <span>{{ suffix }}</span>
+                    <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
+                  </div>
                 </div>
-              </div>
-            </template>
-          </el-input>
-          <el-input v-model="form.password" :placeholder="$t('password')" type="password" autocomplete="off">
-          </el-input>
-          <div class="g-actions">
-            <span class="g-link" v-if="settingStore.settings.register === 0" @click="show = 'register'">{{ $t('regSwitch') }}</span>
-            <span v-else></span>
-            <el-button class="g-btn" type="primary" @click="submit" :loading="loginLoading">{{ $t('loginBtn') }}</el-button>
+              </template>
+            </el-input>
+            <div class="g-actions">
+              <span class="g-link" v-if="settingStore.settings.register === 0" @click="goRegister">{{ $t('regSwitch') }}</span>
+              <span v-else></span>
+              <el-button class="g-btn" type="primary" @click="nextLoginEmail">{{ $t('continueBtn') }}</el-button>
+            </div>
           </div>
-          <el-button class="btn linuxdo-btn" v-if="settingStore.settings.linuxdoSwitch" @click="linuxDoLogin">
-            <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
-          </el-button>
-        </div>
-        <div v-show="show !== 'login'">
-          <el-input class="email-input" v-model="registerForm.email" type="text" :placeholder="$t('emailAccount')"
-                    autocomplete="off">
-            <template #append>
-              <div @click.stop="openSelect">
-                <el-select
-                    v-if="show !== 'login'"
-                    ref="mySelect"
-                    v-model="suffix"
-                    :placeholder="$t('select')"
-                    class="select"
-                >
-                  <el-option
-                      v-for="item in domainList"
-                      :key="item"
-                      :label="item"
-                      :value="item"
-                  />
-                </el-select>
-                <div>
-                  <span>{{ suffix }}</span>
-                  <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
+          <!-- 步骤2：密码 -->
+          <div v-show="loginStep === 2">
+            <h1 class="g-title">{{ $t('welcomeBack') }}</h1>
+            <div class="account-chip" @click="loginStep = 1">
+              <span class="chip-avatar">{{ (form.email[0] || '').toUpperCase() }}</span>
+              <span class="chip-email">{{ form.email + (settingStore.settings.loginDomain === 0 ? suffix : '') }}</span>
+              <Icon icon="mingcute:down-small-fill" width="18" height="18"/>
+            </div>
+            <el-input v-model="form.password" :placeholder="$t('password')" type="password" autocomplete="off" @keyup.enter="submit"/>
+            <div class="g-actions">
+              <span class="g-link" @click="loginStep = 1">{{ $t('backBtn') }}</span>
+              <el-button class="g-btn" type="primary" @click="submit" :loading="loginLoading">{{ $t('loginBtn') }}</el-button>
+            </div>
+            <el-button class="btn linuxdo-btn" v-if="settingStore.settings.linuxdoSwitch" @click="linuxDoLogin">
+              <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
+            </el-button>
+          </div>
+        </template>
+
+        <!-- ===================== 注册 ===================== -->
+        <template v-else>
+          <!-- 步骤1：昵称 -->
+          <div v-show="regStep === 1">
+            <h1 class="g-title">{{ $t('regSwitch') }}</h1>
+            <p class="g-subtitle">{{ $t('regNameSub') }}</p>
+            <el-input v-model="registerForm.name" type="text" :placeholder="$t('nicknameOptional')" autocomplete="off" @keyup.enter="regStep = 2"/>
+            <div class="g-actions">
+              <span class="g-link" @click="goLogin">{{ $t('loginSwitch') }}</span>
+              <el-button class="g-btn" type="primary" @click="regStep = 2">{{ $t('continueBtn') }}</el-button>
+            </div>
+          </div>
+          <!-- 步骤2：选邮箱 -->
+          <div v-show="regStep === 2">
+            <h1 class="g-title">{{ $t('regEmailTitle') }}</h1>
+            <p class="g-subtitle">{{ $t('regEmailSub', {brand: settingStore.settings.title}) }}</p>
+            <el-input class="email-input" v-model="registerForm.email" type="text" :placeholder="$t('emailAccount')"
+                      autocomplete="off" @keyup.enter="nextRegEmail">
+              <template #append>
+                <div @click.stop="openSelect">
+                  <el-select ref="mySelect" v-model="suffix" :placeholder="$t('select')" class="select">
+                    <el-option v-for="item in domainList" :key="item" :label="item" :value="item"/>
+                  </el-select>
+                  <div>
+                    <span>{{ suffix }}</span>
+                    <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
+                  </div>
                 </div>
-              </div>
-            </template>
-          </el-input>
-          <el-input v-model="registerForm.password" :placeholder="$t('password')" type="password" autocomplete="off"/>
-          <el-input v-model="registerForm.confirmPassword" :placeholder="$t('confirmPwd')" type="password"
-                    autocomplete="off"/>
-          <el-input v-if="settingStore.settings.regKey === 0" v-model="registerForm.code" :placeholder="$t('regKey')"
-                    type="text" autocomplete="off"/>
-          <el-input v-if="settingStore.settings.regKey === 2" v-model="registerForm.code"
-                    :placeholder="$t('regKeyOptional')" type="text" autocomplete="off"/>
-          <div v-show="verifyShow"
-               class="register-turnstile"
-               :data-sitekey="settingStore.settings.siteKey"
-               data-callback="onTurnstileSuccess"
-               data-error-callback="onTurnstileError"
-               data-after-interactive-callback="loadAfter"
-               data-before-interactive-callback="loadBefore"
-          >
-            <span style="font-size: 12px;color: #F56C6C" v-if="botJsError">{{ $t('verifyModuleFailed') }}</span>
+              </template>
+            </el-input>
+            <div class="g-actions">
+              <span class="g-link" @click="regStep = 1">{{ $t('backBtn') }}</span>
+              <el-button class="g-btn" type="primary" @click="nextRegEmail">{{ $t('continueBtn') }}</el-button>
+            </div>
           </div>
-          <div class="g-actions">
-            <span class="g-link" v-if="settingStore.settings.register === 0" @click="show = 'login'">{{ $t('loginSwitch') }}</span>
-            <span v-else></span>
-            <el-button class="g-btn" type="primary" @click="submitRegister" :loading="registerLoading">{{ $t('regBtn') }}</el-button>
+          <!-- 步骤3：设密码 -->
+          <div v-show="regStep === 3">
+            <h1 class="g-title">{{ $t('regPwdTitle') }}</h1>
+            <p class="g-subtitle">{{ $t('regPwdSub') }}</p>
+            <el-input v-model="registerForm.password" :placeholder="$t('password')" type="password" autocomplete="off"/>
+            <el-input v-model="registerForm.confirmPassword" :placeholder="$t('confirmPwd')" type="password" autocomplete="off"/>
+            <el-input v-if="settingStore.settings.regKey === 0" v-model="registerForm.code" :placeholder="$t('regKey')"
+                      type="text" autocomplete="off"/>
+            <el-input v-if="settingStore.settings.regKey === 2" v-model="registerForm.code"
+                      :placeholder="$t('regKeyOptional')" type="text" autocomplete="off"/>
+            <div v-show="verifyShow"
+                 class="register-turnstile"
+                 :data-sitekey="settingStore.settings.siteKey"
+                 data-callback="onTurnstileSuccess"
+                 data-error-callback="onTurnstileError"
+                 data-after-interactive-callback="loadAfter"
+                 data-before-interactive-callback="loadBefore">
+              <span style="font-size: 12px;color: #F56C6C" v-if="botJsError">{{ $t('verifyModuleFailed') }}</span>
+            </div>
+            <div class="g-actions">
+              <span class="g-link" @click="regStep = 2">{{ $t('backBtn') }}</span>
+              <el-button class="g-btn" type="primary" @click="submitRegister" :loading="registerLoading">{{ $t('createAccountBtn') }}</el-button>
+            </div>
+            <el-button v-if="settingStore.settings.linuxdoSwitch" class="btn linuxdo-btn" @click="linuxDoLogin">
+              <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
+            </el-button>
           </div>
-          <el-button v-if="settingStore.settings.linuxdoSwitch" class="btn linuxdo-btn" @click="linuxDoLogin">
-            <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
-          </el-button>
-        </div>
+        </template>
+
         <div class="policy-links">
           <span>{{ $t('footerAgree') }}</span>
           <router-link class="policy-link" to="/privacy">{{ $t('privacyPolicy') }}</router-link>
@@ -170,6 +189,8 @@ const bindLoading = ref(false)
 const oauthLoading = ref(false);
 const showBindForm = ref(false);
 const show = ref('login')
+const loginStep = ref(1)
+const regStep = ref(1)
 
 const bindForm = reactive({
   email: '',
@@ -185,6 +206,7 @@ const form = reactive({
 const mySelect = ref()
 const suffix = ref('')
 const registerForm = reactive({
+  name: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -245,6 +267,45 @@ const background = computed(() => {
 
 const openSelect = () => {
   mySelect.value.toggleMenu()
+}
+
+function goRegister() {
+  show.value = 'register'
+  regStep.value = 1
+}
+
+function goLogin() {
+  show.value = 'login'
+  loginStep.value = 1
+}
+
+function nextLoginEmail() {
+  if (!form.email) {
+    ElMessage({message: t('emptyEmailMsg'), type: 'error', plain: true})
+    return
+  }
+  const email = form.email + (settingStore.settings.loginDomain === 0 ? suffix.value : '')
+  if (!isEmail(email)) {
+    ElMessage({message: t('notEmailMsg'), type: 'error', plain: true})
+    return
+  }
+  loginStep.value = 2
+}
+
+function nextRegEmail() {
+  if (!registerForm.email) {
+    ElMessage({message: t('emptyEmailMsg'), type: 'error', plain: true})
+    return
+  }
+  if (registerForm.email.length < settingStore.settings.minEmailPrefix) {
+    ElMessage({message: t('minEmailPrefix', {msg: settingStore.settings.minEmailPrefix}), type: 'error', plain: true})
+    return
+  }
+  if (!isEmail(registerForm.email + suffix.value)) {
+    ElMessage({message: t('notEmailMsg'), type: 'error', plain: true})
+    return
+  }
+  regStep.value = 3
 }
 
 function linuxDoLogin() {
@@ -506,12 +567,16 @@ function submitRegister() {
   const form = {
     email: registerForm.email + suffix.value,
     password: registerForm.password,
+    name: registerForm.name,
     token: verifyToken,
     code: registerForm.code
   }
 
   register(form).then(({regVerifyOpen}) => {
     show.value = 'login'
+    loginStep.value = 1
+    regStep.value = 1
+    registerForm.name = ''
     registerForm.email = ''
     registerForm.password = ''
     registerForm.confirmPassword = ''
@@ -646,6 +711,42 @@ function submitRegister() {
 
   .linuxdo-btn {
     margin-top: 16px;
+  }
+
+  .account-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 2px auto 26px;
+    padding: 4px 12px 4px 6px;
+    border: 1px solid var(--base-border-color);
+    border-radius: 999px;
+    font-size: 14px;
+    color: var(--el-text-color-primary);
+    cursor: pointer;
+
+    .chip-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--el-color-primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      flex: none;
+    }
+
+    .chip-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   :deep(.el-input__wrapper) {
