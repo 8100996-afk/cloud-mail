@@ -4,11 +4,10 @@
     <div class="form-wrapper">
       <div class="container">
         <div class="brand-head">
-          <BrandLogo :size="48"/>
-          <span class="form-title">{{ settingStore.settings.title }}</span>
+          <BrandLogo :size="40"/>
         </div>
-        <span class="form-desc" v-if="show === 'login'">{{ $t('loginTitle') }}</span>
-        <span class="form-desc" v-else>{{ $t('regTitle') }}</span>
+        <h1 class="g-title">{{ show === 'login' ? $t('loginBtn') : $t('regSwitch') }}</h1>
+        <p class="g-subtitle">{{ show === 'login' ? $t('loginSub', {brand: settingStore.settings.title}) : $t('regSub', {brand: settingStore.settings.title}) }}</p>
         <div v-show="show === 'login'">
           <el-input :class="settingStore.settings.loginDomain === 0 ? 'email-input' : ''" v-model="form.email"
                     type="text" :placeholder="$t('emailAccount')" autocomplete="off">
@@ -37,10 +36,12 @@
           </el-input>
           <el-input v-model="form.password" :placeholder="$t('password')" type="password" autocomplete="off">
           </el-input>
-          <el-button class="btn" type="primary" @click="submit" :loading="loginLoading"
-          >{{ $t('loginBtn') }}
-          </el-button>
-          <el-button class="btn" v-if="settingStore.settings.linuxdoSwitch"  style="margin-top: 10px"  @click="linuxDoLogin">
+          <div class="g-actions">
+            <span class="g-link" v-if="settingStore.settings.register === 0" @click="show = 'register'">{{ $t('regSwitch') }}</span>
+            <span v-else></span>
+            <el-button class="g-btn" type="primary" @click="submit" :loading="loginLoading">{{ $t('loginBtn') }}</el-button>
+          </div>
+          <el-button class="btn linuxdo-btn" v-if="settingStore.settings.linuxdoSwitch" @click="linuxDoLogin">
             <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
           </el-button>
         </div>
@@ -87,19 +88,15 @@
           >
             <span style="font-size: 12px;color: #F56C6C" v-if="botJsError">{{ $t('verifyModuleFailed') }}</span>
           </div>
-          <el-button class="btn" style="margin: 0" type="primary" @click="submitRegister" :loading="registerLoading"
-          >{{ $t('regBtn') }}
-          </el-button>
-          <el-button v-if="settingStore.settings.linuxdoSwitch" class="btn" style="margin-top: 10px"  @click="linuxDoLogin">
+          <div class="g-actions">
+            <span class="g-link" v-if="settingStore.settings.register === 0" @click="show = 'login'">{{ $t('loginSwitch') }}</span>
+            <span v-else></span>
+            <el-button class="g-btn" type="primary" @click="submitRegister" :loading="registerLoading">{{ $t('regBtn') }}</el-button>
+          </div>
+          <el-button v-if="settingStore.settings.linuxdoSwitch" class="btn linuxdo-btn" @click="linuxDoLogin">
             <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
           </el-button>
         </div>
-        <template v-if="settingStore.settings.register === 0">
-          <div class="switch" @click="show = 'register'" v-if="show === 'login'">{{ $t('noAccount') }}
-            <span>{{ $t('regSwitch') }}</span></div>
-          <div class="switch" @click="show = 'login'" v-else>{{ $t('hasAccount') }} <span>{{ $t('loginSwitch') }}</span>
-          </div>
-        </template>
         <div class="policy-links">
           <span>{{ $t('footerAgree') }}</span>
           <router-link class="policy-link" to="/privacy">{{ $t('privacyPolicy') }}</router-link>
@@ -600,34 +597,55 @@ function submitRegister() {
     margin-bottom: 6px;
   }
 
-  .btn {
-    height: 40px;
-    width: 100%;
-    border-radius: 20px;
-    font-weight: 500;
+  .g-title {
+    margin: 8px 0 6px;
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--el-text-color-primary);
   }
 
-  .form-desc {
-    margin-top: 4px;
-    margin-bottom: 24px;
+  .g-subtitle {
+    margin: 0 0 28px;
+    font-size: 15px;
     text-align: center;
     color: var(--form-desc-color);
   }
 
-  .form-title {
-    font-weight: 500;
-    font-size: 24px !important;
-    text-align: center;
+  .g-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
   }
 
-  .switch {
-    margin-top: 20px;
-    text-align: center;
+  .g-link {
+    color: var(--login-switch-color);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
 
-    span {
-      color: var(--login-switch-color);
-      cursor: pointer;
-    }
+  .g-btn {
+    height: 38px;
+    min-width: 84px;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0 24px;
+  }
+
+  .btn {
+    height: 40px;
+    width: 100%;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  .linuxdo-btn {
+    margin-top: 16px;
   }
 
   :deep(.el-input__wrapper) {

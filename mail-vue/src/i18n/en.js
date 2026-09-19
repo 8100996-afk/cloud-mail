@@ -128,6 +128,8 @@ const en = {
     regBtn: 'Sign up',
     loginTitle: 'Sign in to your account to access email',
     regTitle: 'Sign up for an account to use email',
+    loginSub: 'Use your {brand} Account',
+    regSub: 'Create your {brand} Account',
     confirmPwd: 'Confirm password',
     regKeyOptional: 'Invite code (Optional)',
     noAccount: 'Don\'t have an account? \u200B',
